@@ -23,7 +23,7 @@ def next_move_k_black(depth: int, k:int, board: chess.Board, debug=True) -> ches
 
     debug_info["time"] = time.time() - t0
     if debug == True:
-        print(f"info {debug_info}")
+        print(f"black_k_info {debug_info}")
     return move
 
 
@@ -46,7 +46,7 @@ def get_ordered_moves(depth: int, k: int, board: chess.Board ) -> List[chess.Mov
 
     size = len(in_order)
     l= list(in_order)
-    if board.turn ==chess.BLACK:
+    if board.turn == chess.BLACK and k < size:
      del l[size-k:]
     return l
 

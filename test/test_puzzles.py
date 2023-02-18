@@ -1,6 +1,7 @@
 import chess
 import unittest
 from movegeneration import next_move
+from simulator import Simulator
 
 
 class TestPuzzles(unittest.TestCase):
@@ -18,3 +19,7 @@ class TestPuzzles(unittest.TestCase):
         board = chess.Board("6k1/8/8/5r2/8/8/4r3/2K5 b - - 1 1")
         move = next_move(3, board)
         self.assertEqual(move.uci(), "f5f1")
+
+    def test_board(self):
+        sim = Simulator()
+        sim.run()

@@ -8,6 +8,7 @@ from movegeneration_k_black import debug_info as debug_info_k_black
 from movegeneration_k_white import next_move_k_white
 from movegeneration_k_white import debug_info as debug_info_k_white
 
+
 @dataclass
 class DataRow:
     K: int
@@ -26,10 +27,15 @@ class DataRow:
 
 
 games: list[str] = ["r2qk2r/pb4pp/1n2Pb2/2B2Q2/p1p5/2P5/2B2PPP/RN2R1K1 w - - 1 0"]  # TODO: insert games in FEN format
-k_values: list[int] = [1, 5, 10, 20]  # TODO: define the exact values
-depths: list[int] = [2, 4, 6, 8]  # TODO> define the exact values
+k_values: list[int] = [5, 10, 15]  # TODO: define the exact values
+depths: list[int] = [3]  # TODO> define the exact values
 colors = {True: "White", False:"Black", None:"Draw"}
 Data : list[DataRow] = []
+
+
+clear_white_win_positions = []
+clear_black_win_positions = []
+
 
 
 # right now, the simulator runs all the games. maybe we'll change in the future
@@ -77,7 +83,9 @@ class Simulator:
                    time_black=[]
                    while (not board.is_game_over()):
                        # next move of MINMAX-K(K, depth)
-                       move_white_uci = next_move_k_white(depth,K,board)
+                       move_white_uci = next_move_k_white(depth,K,board,False)
+                       # move_white_uci = next_move(depth, board, False)
+                       print(move_white_uci)
                        move_white = chess.Move.from_uci(move_white_uci.uci())
                        board.push(move_white)
 
@@ -87,7 +95,8 @@ class Simulator:
 
                        if(not board.is_game_over()):
                            # next_move of alpha-beta(depth)
-                           move_black_uci = next_move(depth, board)
+                           move_black_uci = next_move(depth, board, False)
+                           print(move_black_uci)
                            move_black = chess.Move.from_uci(move_black_uci.uci())
                            board.push(move_black)
 

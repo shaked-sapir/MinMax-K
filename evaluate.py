@@ -101,11 +101,20 @@ kingEvalEndGameBlack = list(reversed(kingEvalEndGameWhite))
 def move_value(board: chess.Board, move: chess.Move, endgame: bool) -> float:
     """
     How good is a move?
+    A checkmate is SUPERIOR!
     A promotion is great.
     A weaker piece taking a stronger piece is good.
     A stronger piece taking a weaker piece is bad.
     Also consider the position change via piece-square table.
     """
+    board.push(move)
+
+    if board.is_checkmate():
+        board.pop()
+        return -float("inf") if board.turn == chess.BLACK else float("inf")
+
+    board.pop()
+
     if move.promotion is not None:
         return -float("inf") if board.turn == chess.BLACK else float("inf")
 
