@@ -4,7 +4,7 @@ import sys
 import time
 from evaluate import evaluate_board, move_value, check_end_game
 
-debug_info: Dict[str, Any] = {}
+debug_info_k_white: Dict[str, Any] = {}
 
 
 MATE_SCORE     = 1000000000
@@ -15,15 +15,15 @@ def next_move_k_white(depth: int, k:int, board: chess.Board, debug=True) -> ches
     """
     What is the next best move?
     """
-    debug_info.clear()
-    debug_info["nodes"] = 0
+    debug_info_k_white.clear()
+    debug_info_k_white["nodes"] = 0
     t0 = time.time()
 
     move = minimax_root(depth,k, board)
 
-    debug_info["time"] = time.time() - t0
+    debug_info_k_white["time"] = time.time() - t0
     if debug == True:
-        print(f"white_k_info {debug_info}")
+        print(f"white_k_info {debug_info_k_white}")
     return move
 
 
@@ -98,7 +98,7 @@ def minimax(
     Core minimax logic.
     https://en.wikipedia.org/wiki/Minimax
     """
-    debug_info["nodes"] += 1
+    debug_info_k_white["nodes"] += 1
 
     if board.is_checkmate():
         # The previous move resulted in checkmate
