@@ -2,6 +2,7 @@ import chess
 import unittest
 from movegeneration import next_move
 from simulator import Simulator
+from config import test_conf, prod_conf
 
 
 class TestPuzzles(unittest.TestCase):
@@ -21,5 +22,5 @@ class TestPuzzles(unittest.TestCase):
         self.assertEqual(move.uci(), "f5f1")
 
     def test_board(self):
-        sim = Simulator()
+        sim = Simulator(test_conf)
         sim.run()
