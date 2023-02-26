@@ -47,7 +47,12 @@ def get_ordered_moves(depth: int, k: int, board: chess.Board ) -> List[chess.Mov
     size = len(in_order)
     l= list(in_order)
     if board.turn == chess.WHITE and k < size:
-     del l[size-k:]
+        margin = max(size-k, k)
+        # if size - k < k:
+        #     del l[size-k:]
+        # else:
+        #     del l[k:]
+        del l[margin:]
     return l
 
 

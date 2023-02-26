@@ -23,7 +23,8 @@ class DataRow:
     time_white_sum:int
     time_black_avg:float
     time_black_sum:int
-    result: str
+    sim_result: str
+    expected_result: str
     alg_white: str
     alg_black: str
     num_turns: int
@@ -142,7 +143,7 @@ class Simulator:
 
         """
         Data: list[DataRow] = []
-        for game_fen in self.games:
+        for (game_fen, expected_res) in self.games:
             for K in self.k_values:
                 for (alpha_beta_depth, minmaxk_depth) in self.depths_conf:
                    print(f"alpha_beta_depth = {alpha_beta_depth} | minmaxK_ depth = {minmaxk_depth} | K = {K}")
@@ -165,6 +166,7 @@ class Simulator:
                                            np.average(time_black),
                                            np.sum(time_black),
                                            result,
+                                           expected_res,
                                            "MinMax_K",
                                            "Alpha_Beta",
                                            turns_played,
@@ -190,6 +192,7 @@ class Simulator:
                                            np.average(time_black),
                                            np.sum(time_black),
                                            result,
+                                           expected_res,
                                            "Alpha_Beta",
                                            "MinMax_K",
                                            turns_played,
@@ -214,6 +217,7 @@ class Simulator:
                                             np.average(time_black),
                                             np.sum(time_black),
                                             result,
+                                            expected_res,
                                             "Alpha_Beta",
                                             "MinMax_K",
                                             turns_played,
@@ -239,6 +243,7 @@ class Simulator:
                                             np.average(time_black),
                                             np.sum(time_black),
                                             result,
+                                            expected_res,
                                             "MinMax_K",
                                             "Alpha_Beta",
                                             turns_played,
