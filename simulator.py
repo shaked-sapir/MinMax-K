@@ -1,5 +1,6 @@
 import chess
 import numpy as np
+from threading import Thread
 from dataclasses import dataclass
 from movegeneration import next_move
 from movegeneration import debug_info as debug_info_alpha_beta
@@ -8,7 +9,6 @@ from movegeneration_k_black import debug_info_k_black
 from movegeneration_k_white import next_move_k_white
 from movegeneration_k_white import debug_info_k_white
 
-colors = {True: "White", False:"Black", None:"Draw"}
 
 @dataclass
 class DataRow:
@@ -30,14 +30,21 @@ class DataRow:
     num_turns: int
     fen_position: str
 
+
+Data: list[DataRow] = []
+threads: list[Thread] = []
+colors = {True: "White", False:"Black", None:"Draw"}
+
+
 # right now, the simulator runs all the games. maybe we'll change in the future
 class Simulator:
     def __init__(self, configuration):
         self.games = configuration['games']
         self.k_values = configuration['k_values']
         self.depths = configuration['depths']
-        self.depths_conf = configuration['depths_conf']
+        self.depths_conf = list(configuration['depths_conf'])
         self.turns_limit = configuration['turns_limit']
+
     def play_game_white(self, minmaxk_depth, alpha_beta_depth, K, board, white_is_minmaxK):
         turns_played = 0
         [nodes_white, nodes_black, time_white, time_black] = [[], [], [], []]
@@ -73,14 +80,13 @@ class Simulator:
 
         return board, nodes_white, nodes_black, time_white, time_black, turns_played
 
-
     def play_game_black(self, minmaxk_depth, alpha_beta_depth, K, board, black_is_minmaxK):
         [nodes_white, nodes_black, time_white, time_black] = [[], [], [], []]
         turns_played = 0
         while not board.is_game_over() and turns_played < self.turns_limit:
             move_black_uci = next_move_k_black(minmaxk_depth, K, board, False) if black_is_minmaxK else next_move(alpha_beta_depth,
-                                                                                                              board,
-                                                                                                              False)
+                                                                                                                  board,
+                                                                                                                  False)
             # print(move_black_uci)
             move_black = chess.Move.from_uci(move_black_uci.uci())
             board.push(move_black)
@@ -96,8 +102,8 @@ class Simulator:
 
             if not board.is_game_over():
                 move_white_uci = next_move_k_white(minmaxk_depth, K, board, False) if not black_is_minmaxK else next_move(alpha_beta_depth,
-                                                                                                              board,
-                                                                                                              False)
+                                                                                                                          board,
+                                                                                                                          False)
                 # print(move_white_uci)
                 move_white = chess.Move.from_uci(move_white_uci.uci())
                 board.push(move_white)
@@ -116,6 +122,113 @@ class Simulator:
     def get_game_result(self, board):
         outcome = board.outcome()
         return colors[outcome] if outcome is None else colors[outcome.winner]
+
+    def play_game(self, game_fen, alpha_beta_depth, minmaxk_depth, K, expected_res):
+        board = chess.Board(game_fen)
+        if board.turn == chess.WHITE:
+            # white plays MINMAX-K, black plays classic
+            [board, nodes_white, nodes_black, time_white, time_black, turns_played] = self.play_game_white(
+                minmaxk_depth, alpha_beta_depth, K, board, white_is_minmaxK=True)
+            result = self.get_game_result(board)
+            game_summary = DataRow(K,
+                                   minmaxk_depth,
+                                   alpha_beta_depth,
+                                   np.average(nodes_white),
+                                   np.sum(nodes_white),
+                                   np.average(nodes_black),
+                                   np.sum(nodes_black),
+                                   np.average(time_white),
+                                   np.sum(time_white),
+                                   np.average(time_black),
+                                   np.sum(time_black),
+                                   result,
+                                   expected_res,
+                                   "MinMax_K",
+                                   "Alpha_Beta",
+                                   turns_played,
+                                   game_fen
+                                   )
+            print(game_summary)
+            Data.append(game_summary)
+
+            # white plays classic, black plays MINMAX-K
+            board = chess.Board(game_fen)
+            [board, nodes_white, nodes_black, time_white, time_black, turns_played] = self.play_game_white(
+                minmaxk_depth, alpha_beta_depth, K, board, white_is_minmaxK=False)
+            result = self.get_game_result(board)
+            game_summary = DataRow(K,
+                                   minmaxk_depth,
+                                   alpha_beta_depth,
+                                   np.average(nodes_white),
+                                   np.sum(nodes_white),
+                                   np.average(nodes_black),
+                                   np.sum(nodes_black),
+                                   np.average(time_white),
+                                   np.sum(time_white),
+                                   np.average(time_black),
+                                   np.sum(time_black),
+                                   result,
+                                   expected_res,
+                                   "Alpha_Beta",
+                                   "MinMax_K",
+                                   turns_played,
+                                   game_fen
+                                   )
+            print(game_summary)
+            Data.append(game_summary)
+        else:
+            # white plays classic, black plays MINMAX-K
+            [board, nodes_white, nodes_black, time_white, time_black, turns_played] = self.play_game_black(
+                minmaxk_depth, alpha_beta_depth, K, board,
+                black_is_minmaxK=True)
+            result = self.get_game_result(board)
+            game_summary = DataRow(K,
+                                   minmaxk_depth,
+                                   alpha_beta_depth,
+                                   np.average(nodes_white),
+                                   np.sum(nodes_white),
+                                   np.average(nodes_black),
+                                   np.sum(nodes_black),
+                                   np.average(time_white),
+                                   np.sum(time_white),
+                                   np.average(time_black),
+                                   np.sum(time_black),
+                                   result,
+                                   expected_res,
+                                   "Alpha_Beta",
+                                   "MinMax_K",
+                                   turns_played,
+                                   game_fen
+                                   )
+            print(game_summary)
+            Data.append(game_summary)
+
+            # white plays MINMAX-K, black plays classic
+            board = chess.Board(game_fen)
+            [board, nodes_white, nodes_black, time_white, time_black, turns_played] = self.play_game_black(
+                minmaxk_depth, alpha_beta_depth, K, board,
+                black_is_minmaxK=False)
+            result = self.get_game_result(board)
+            game_summary = DataRow(K,
+                                   minmaxk_depth,
+                                   alpha_beta_depth,
+                                   np.average(nodes_white),
+                                   np.sum(nodes_white),
+                                   np.average(nodes_black),
+                                   np.sum(nodes_black),
+                                   np.average(time_white),
+                                   np.sum(time_white),
+                                   np.average(time_black),
+                                   np.sum(time_black),
+                                   result,
+                                   expected_res,
+                                   "MinMax_K",
+                                   "Alpha_Beta",
+                                   turns_played,
+                                   game_fen
+                                   )
+            print(game_summary)
+            Data.append(game_summary)
 
     def run(self):
 
@@ -142,116 +255,28 @@ class Simulator:
         1.1.6 report 'A' + 'B'
 
         """
-        Data: list[DataRow] = []
         for (game_fen, expected_res) in self.games:
             for K in self.k_values:
                 for (alpha_beta_depth, minmaxk_depth) in self.depths_conf:
-                   print(f"alpha_beta_depth = {alpha_beta_depth} | minmaxK_ depth = {minmaxk_depth} | K = {K}")
-                   # detect who's player turn is, and play accordingly
+                    print(f"alpha_beta_depth = {alpha_beta_depth} | minmaxK_ depth = {minmaxk_depth} | K = {K}")
+                    # detect who's player turn is, and play accordingly
+                    try:
+                        print(f"starting thread for:  game = {game_fen} | minmax_depth = {minmaxk_depth} | alpha_beta_deprh = {alpha_beta_depth} | K = {K}")
+                        _thread = Thread(target=self.play_game, args=(game_fen, alpha_beta_depth, minmaxk_depth, K, expected_res))
+                        _thread.start()
+                        threads.append(_thread)
+                    except Exception as e:
+                        print("Error: unable start thread")
 
-                   board = chess.Board(game_fen)
-                   if board.turn == chess.WHITE:
-                       # white plays MINMAX-K, black plays classic
-                       [board, nodes_white, nodes_black, time_white, time_black, turns_played] = self.play_game_white(minmaxk_depth, alpha_beta_depth, K, board, white_is_minmaxK=True)
-                       result = self.get_game_result(board)
-                       game_summary = DataRow(K,
-                                           minmaxk_depth,
-                                           alpha_beta_depth,
-                                           np.average(nodes_white),
-                                           np.sum(nodes_white),
-                                           np.average(nodes_black),
-                                           np.sum(nodes_black),
-                                           np.average(time_white),
-                                           np.sum(time_white),
-                                           np.average(time_black),
-                                           np.sum(time_black),
-                                           result,
-                                           expected_res,
-                                           "MinMax_K",
-                                           "Alpha_Beta",
-                                           turns_played,
-                                           game_fen
-                                           )
-                       print(game_summary)
-                       Data.append(game_summary)
+        print(len(threads))
 
-
-                       # white plays classic, black plays MINMAX-K
-                       board = chess.Board(game_fen)
-                       [board, nodes_white, nodes_black, time_white, time_black, turns_played] = self.play_game_white(minmaxk_depth, alpha_beta_depth, K, board, white_is_minmaxK=False)
-                       result = self.get_game_result(board)
-                       game_summary = DataRow(K,
-                                              minmaxk_depth,
-                                              alpha_beta_depth,
-                                           np.average(nodes_white),
-                                           np.sum(nodes_white),
-                                           np.average(nodes_black),
-                                           np.sum(nodes_black),
-                                           np.average(time_white),
-                                           np.sum(time_white),
-                                           np.average(time_black),
-                                           np.sum(time_black),
-                                           result,
-                                           expected_res,
-                                           "Alpha_Beta",
-                                           "MinMax_K",
-                                           turns_played,
-                                           game_fen
-                                           )
-                       print(game_summary)
-                       Data.append(game_summary)
-                   else:
-                        # white plays classic, black plays MINMAX-K
-                        [board, nodes_white, nodes_black, time_white, time_black, turns_played] = self.play_game_black(minmaxk_depth, alpha_beta_depth, K, board,
-                                                                                                         black_is_minmaxK=True)
-                        result = self.get_game_result(board)
-                        game_summary = DataRow(K,
-                                               minmaxk_depth,
-                                               alpha_beta_depth,
-                                            np.average(nodes_white),
-                                            np.sum(nodes_white),
-                                            np.average(nodes_black),
-                                            np.sum(nodes_black),
-                                            np.average(time_white),
-                                            np.sum(time_white),
-                                            np.average(time_black),
-                                            np.sum(time_black),
-                                            result,
-                                            expected_res,
-                                            "Alpha_Beta",
-                                            "MinMax_K",
-                                            turns_played,
-                                            game_fen
-                                            )
-                        print(game_summary)
-                        Data.append(game_summary)
-
-                        # white plays MINMAX-K, black plays classic
-                        board = chess.Board(game_fen)
-                        [board, nodes_white, nodes_black, time_white, time_black, turns_played] = self.play_game_black(minmaxk_depth, alpha_beta_depth, K, board,
-                                                                                                         black_is_minmaxK=False)
-                        result = self.get_game_result(board)
-                        game_summary = DataRow(K,
-                                               minmaxk_depth,
-                                               alpha_beta_depth,
-                                            np.average(nodes_white),
-                                            np.sum(nodes_white),
-                                            np.average(nodes_black),
-                                            np.sum(nodes_black),
-                                            np.average(time_white),
-                                            np.sum(time_white),
-                                            np.average(time_black),
-                                            np.sum(time_black),
-                                            result,
-                                            expected_res,
-                                            "MinMax_K",
-                                            "Alpha_Beta",
-                                            turns_played,
-                                            game_fen
-                                            )
-                        print(game_summary)
-                        Data.append(game_summary)
+        for _thread in threads:
+            _thread.join()
+        print("finished running!")
         print(Data)
+
+
+
 
 
 

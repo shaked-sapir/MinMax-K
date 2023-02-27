@@ -20,7 +20,7 @@ equal_positions_white_turn: list[str] = [
 
 clear_black_win_positions: list[str] = [
     ("2k3rr/ppp1R3/8/2Pb4/5p2/5B2/PP5P/2R3BK b - - 1 1", "Black"), # black mates in 1: 1. ...b:f3#
-     ("6k1/ppR4p/6p1/2P1P1N1/7K/2r4P/P5r1/5R2 b - - 1 1", "Black"), # black mates in 3: 1. ...rc4+ 2. Ne4 r:e4+ 3. Rf4 r:f4#
+     ("6k1/ppR4p/6p1/2P1P1N1/7K/2r4P/P5r1/5R2 b - - 1 1", "Black"), # black mates in 3: 1. ...rc4+ 2. Ne4 r:e4+ 3. Rf4 r:f4# || if black does not check - white mates in 3!
       ("rn1qk3/p4pp1/2P5/4P3/5P2/P2B2Pr/5B1p/1R1Q1R1K b - - 1 1", "Black"), # black mates in 3: 1. ... qd5+ 2. Be4 q:e4+ 3. Qf3 q:f3#
 ]
 
@@ -31,9 +31,9 @@ black_wins_no_mate: list[str] = [
 ]
 
 test_conf = {
-    "k_values": [15],
-    "depths": [3, 7],
-    "depths_conf": [prod for prod in product([3, 5], repeat=2) if prod[0] <= prod[1]],
+    "k_values": [20],
+    "depths": [3, 5],
+    "depths_conf": product([3, 5], repeat=2),
     "turns_limit": 10,
     "games": sanity_position + clear_white_win_positions + clear_black_win_positions
 }
@@ -41,7 +41,7 @@ test_conf = {
 prod_conf = {
     "k_values": [5, 10, 15, 20],
     "depths":  [3, 5, 7, 9],
-    "depths_conf": [prod for prod in product([3, 5, 7, 9], repeat=2) if prod[0] <= prod[1]],
+    "depths_conf": product([3, 5, 7, 9], repeat=2),
     "turns_limit": 100,
     "games":  sanity_position \
             + clear_white_win_positions \
