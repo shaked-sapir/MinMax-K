@@ -1,30 +1,34 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 import chess
 import sys
 import time
+
+from chess import Move
+
 from evaluate import evaluate_board, move_value, check_end_game
 
-debug_info: Dict[str, Any] = {}
+# debug_info: Dict[str, Any] = {}
 
 
 MATE_SCORE     = 1000000000
 MATE_THRESHOLD =  999000000
 
 
-def next_move(depth: int, board: chess.Board, debug=True) -> chess.Move:
+def next_move(depth: int, board: chess.Board, debug=True) -> tuple[Move, dict[str, Any]]:
     """
     What is the next best move?
     """
-    debug_info.clear()
+    # debug_info.clear()
+    debug_info: Dict[str, Any] = {}
     debug_info["nodes"] = 0
     t0 = time.time()
 
-    move = minimax_root(depth, board)
+    move = minimax_root(depth, board, debug_info)
 
     debug_info["time"] = time.time() - t0
     if debug == True:
         print(f"info {debug_info}")
-    return move
+    return move, debug_info
 
 
 def get_ordered_moves(board: chess.Board) -> List[chess.Move]:
@@ -44,7 +48,7 @@ def get_ordered_moves(board: chess.Board) -> List[chess.Move]:
     return list(in_order)
 
 
-def minimax_root(depth: int, board: chess.Board) -> chess.Move:
+def minimax_root(depth: int, board: chess.Board, debug_info) -> chess.Move:
     """
     What is the highest value move per our evaluation function?
     """
@@ -66,7 +70,7 @@ def minimax_root(depth: int, board: chess.Board) -> chess.Move:
         if board.can_claim_draw():
             value = 0.0
         else:
-            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize)
+            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, debug_info)
         board.pop()
         if maximize and value >= best_move:
             best_move = value
@@ -84,6 +88,7 @@ def minimax(
     alpha: float,
     beta: float,
     is_maximising_player: bool,
+    debug_info
 ) -> float:
     """
     Core minimax logic.
@@ -107,7 +112,7 @@ def minimax(
         moves = get_ordered_moves(board)
         for move in moves:
             board.push(move)
-            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player)
+            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, debug_info)
             # Each ply after a checkmate is slower, so they get ranked slightly less
             # We want the fastest mate!
             if curr_move > MATE_THRESHOLD:
@@ -128,7 +133,7 @@ def minimax(
         moves = get_ordered_moves(board)
         for move in moves:
             board.push(move)
-            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player)
+            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, debug_info)
             if curr_move > MATE_THRESHOLD:
                 curr_move -= 1
             elif curr_move < -MATE_THRESHOLD:

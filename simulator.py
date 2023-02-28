@@ -3,11 +3,11 @@ import numpy as np
 from threading import Thread
 from dataclasses import dataclass
 from movegeneration import next_move
-from movegeneration import debug_info as debug_info_alpha_beta
+# from movegeneration import debug_info as debug_info_alpha_beta
 from movegeneration_k_black import next_move_k_black
-from movegeneration_k_black import debug_info_k_black
+# from movegeneration_k_black import debug_info_k_black
 from movegeneration_k_white import next_move_k_white
-from movegeneration_k_white import debug_info_k_white
+# from movegeneration_k_white import debug_info_k_white
 
 
 @dataclass
@@ -49,14 +49,14 @@ class Simulator:
         turns_played = 0
         [nodes_white, nodes_black, time_white, time_black] = [[], [], [], []]
         while not board.is_game_over() and turns_played < self.turns_limit:
-            move_white_uci = next_move_k_white(minmaxk_depth, K, board, False) if white_is_minmaxK else next_move(alpha_beta_depth, board, False)
+            [move_white_uci, debug_info] = next_move_k_white(minmaxk_depth, K, board, False) if white_is_minmaxK else next_move(alpha_beta_depth, board, False)
             # print(move_white_uci)
             move_white = chess.Move.from_uci(move_white_uci.uci())
             board.push(move_white)
 
             # collect data
-            white_info_nodes = debug_info_k_white["nodes"] if white_is_minmaxK else debug_info_alpha_beta["nodes"]
-            white_info_time = debug_info_k_white["time"] if white_is_minmaxK else debug_info_alpha_beta["time"]
+            white_info_nodes = debug_info["nodes"]
+            white_info_time = debug_info["time"]
 
             nodes_white.append(white_info_nodes)
             time_white.append(white_info_time)
@@ -64,14 +64,15 @@ class Simulator:
             turns_played += 1
 
             if not board.is_game_over():
-                move_black_uci = next_move_k_black(minmaxk_depth, K, board, False) if not white_is_minmaxK else next_move(alpha_beta_depth, board, False)
+                [move_black_uci, debug_info] = next_move_k_black(minmaxk_depth, K, board, False) if not white_is_minmaxK else next_move(alpha_beta_depth, board, False)
+
                 # print(move_black_uci)
                 move_black = chess.Move.from_uci(move_black_uci.uci())
                 board.push(move_black)
 
                 # collect data
-                black_info_nodes = debug_info_k_black["nodes"] if not white_is_minmaxK else debug_info_alpha_beta["nodes"]
-                black_info_time = debug_info_k_black["time"] if not white_is_minmaxK else debug_info_alpha_beta["time"]
+                black_info_nodes = debug_info["nodes"]
+                black_info_time = debug_info["time"]
 
                 nodes_black.append(black_info_nodes)
                 time_black.append(black_info_time)
@@ -84,16 +85,17 @@ class Simulator:
         [nodes_white, nodes_black, time_white, time_black] = [[], [], [], []]
         turns_played = 0
         while not board.is_game_over() and turns_played < self.turns_limit:
-            move_black_uci = next_move_k_black(minmaxk_depth, K, board, False) if black_is_minmaxK else next_move(alpha_beta_depth,
-                                                                                                                  board,
-                                                                                                                  False)
+            [move_black_uci, debug_info] = next_move_k_black(minmaxk_depth, K, board, False) if black_is_minmaxK else next_move(
+                alpha_beta_depth,
+                board,
+                False)
             # print(move_black_uci)
             move_black = chess.Move.from_uci(move_black_uci.uci())
             board.push(move_black)
 
             # collect data
-            black_info_nodes = debug_info_k_black["nodes"] if black_is_minmaxK else debug_info_alpha_beta["nodes"]
-            black_info_time = debug_info_k_black["time"] if black_is_minmaxK else debug_info_alpha_beta["time"]
+            black_info_nodes = debug_info["nodes"]
+            black_info_time = debug_info["time"]
 
             nodes_black.append(black_info_nodes)
             time_black.append(black_info_time)
@@ -101,16 +103,17 @@ class Simulator:
             turns_played += 1
 
             if not board.is_game_over():
-                move_white_uci = next_move_k_white(minmaxk_depth, K, board, False) if not black_is_minmaxK else next_move(alpha_beta_depth,
-                                                                                                                          board,
-                                                                                                                          False)
+                [move_white_uci, debug_info] = next_move_k_white(minmaxk_depth, K, board,
+                                                   False) if not black_is_minmaxK else next_move(alpha_beta_depth,
+                                                                                                 board,
+                                                                                                 False)
                 # print(move_white_uci)
                 move_white = chess.Move.from_uci(move_white_uci.uci())
                 board.push(move_white)
 
                 # collect data
-                white_info_nodes = debug_info_k_white["nodes"] if not black_is_minmaxK else debug_info_alpha_beta["nodes"]
-                white_info_time = debug_info_k_white["time"] if not black_is_minmaxK else debug_info_alpha_beta["time"]
+                white_info_nodes = debug_info["nodes"]
+                white_info_time = debug_info["time"]
 
                 nodes_white.append(white_info_nodes)
                 time_white.append(white_info_time)
@@ -265,7 +268,9 @@ class Simulator:
                         _thread = Thread(target=self.play_game, args=(game_fen, alpha_beta_depth, minmaxk_depth, K, expected_res))
                         _thread.start()
                         threads.append(_thread)
+
                     except Exception as e:
+                        print(e)
                         print("Error: unable start thread")
 
         print(len(threads))

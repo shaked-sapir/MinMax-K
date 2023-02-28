@@ -35,7 +35,7 @@ test_conf = {
     "depths": [3, 5],
     "depths_conf": product([3, 5], repeat=2),
     "turns_limit": 10,
-    "games": sanity_position + clear_white_win_positions + clear_black_win_positions
+    "games": sanity_position
 }
 
 prod_conf = {

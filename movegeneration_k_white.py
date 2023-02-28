@@ -1,30 +1,34 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 import chess
 import sys
 import time
+
+from chess import Move
+
 from evaluate import evaluate_board, move_value, check_end_game
 
-debug_info_k_white: Dict[str, Any] = {}
+# debug_info_k_white: Dict[str, Any] = {}
 
 
 MATE_SCORE     = 1000000000
 MATE_THRESHOLD =  999000000
 
 
-def next_move_k_white(depth: int, k:int, board: chess.Board, debug=True) -> chess.Move:
+def next_move_k_white(depth: int, k:int, board: chess.Board, debug=True) -> tuple[Move, dict[str, Any]]:
     """
     What is the next best move?
     """
-    debug_info_k_white.clear()
+    # debug_info_k_white.clear()
+    debug_info_k_white: Dict[str, Any] = {}
     debug_info_k_white["nodes"] = 0
     t0 = time.time()
 
-    move = minimax_root(depth,k, board)
+    move = minimax_root(depth,k, board, debug_info_k_white)
 
     debug_info_k_white["time"] = time.time() - t0
     if debug == True:
         print(f"white_k_info {debug_info_k_white}")
-    return move
+    return move, debug_info_k_white
 
 
 def get_ordered_moves(depth: int, k: int, board: chess.Board ) -> List[chess.Move]:
@@ -56,7 +60,7 @@ def get_ordered_moves(depth: int, k: int, board: chess.Board ) -> List[chess.Mov
     return l
 
 
-def minimax_root(depth: int, k: int, board: chess.Board) -> chess.Move:
+def minimax_root(depth: int, k: int, board: chess.Board, debug_info_k_white) -> chess.Move:
     """
     What is the highest value move per our evaluation function?
     """
@@ -79,7 +83,7 @@ def minimax_root(depth: int, k: int, board: chess.Board) -> chess.Move:
         if board.can_claim_draw():
             value = 0.0
         else:
-            value = minimax(depth - 1,k, board, -float("inf"), float("inf"), not maximize)
+            value = minimax(depth - 1,k, board, -float("inf"), float("inf"), not maximize, debug_info_k_white)
         board.pop()
         if maximize and value >= best_move:
             best_move = value
@@ -98,6 +102,7 @@ def minimax(
     alpha: float,
     beta: float,
     is_maximising_player: bool,
+    debug_info_k_white
 ) -> float:
     """
     Core minimax logic.
@@ -121,7 +126,7 @@ def minimax(
         moves = get_ordered_moves(depth,k,board)
         for move in moves:
             board.push(move)
-            curr_move = minimax(depth - 1,k, board, alpha, beta, not is_maximising_player)
+            curr_move = minimax(depth - 1,k, board, alpha, beta, not is_maximising_player, debug_info_k_white)
             # Each ply after a checkmate is slower, so they get ranked slightly less
             # We want the fastest mate!
             if curr_move > MATE_THRESHOLD:
@@ -142,7 +147,7 @@ def minimax(
         moves = get_ordered_moves(depth, k,board)
         for move in moves:
             board.push(move)
-            curr_move = minimax(depth - 1,k, board, alpha, beta, not is_maximising_player)
+            curr_move = minimax(depth - 1,k, board, alpha, beta, not is_maximising_player, debug_info_k_white)
             if curr_move > MATE_THRESHOLD:
                 curr_move -= 1
             elif curr_move < -MATE_THRESHOLD:
